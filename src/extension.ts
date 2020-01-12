@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import {setDirectory} from './setDirectory';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -19,7 +20,11 @@ export function activate(context: vscode.ExtensionContext) {
         // Display a message box to the user
         vscode.window.showInformationMessage('Hello vscode');
         const quickpick = vscode.window.createQuickPick();
-        const path = vscode.Uri.file('Users/zach/');
+        let path = vscode.Uri.file('Users/zach/');
+        if (vscode.workspace.workspaceFolders) {
+            path = vscode.workspace.workspaceFolders[0].uri;
+            console.log(vscode.workspace.workspaceFolders);
+        }
         const dir = await vscode.workspace.fs.readDirectory(path);
         dir.forEach(file => {
             quickpick.items = quickpick.items.concat(
@@ -30,12 +35,35 @@ export function activate(context: vscode.ExtensionContext) {
             );
         });
         quickpick.show();
+        quickpick.value = `${path.path}/`;
+        let charCount = quickpick.value.length;
+        let backspace = false;
+
         quickpick.onDidChangeValue(search => {
 
+            // detect whether character was deleted
+            if (charCount > search.length) {
+               backspace = true;
+               charCount--;
+            } else {
+                charCount++;
+            }
+
+            // automatically go to home directory if user enters ~
             if (search[search.length - 1] === '~') {
                 console.log('~');
-                quickpick.value = '~/';
+                // quickpick.value = '~/';
+                setDirectory('~/', quickpick);
             }
+
+            //TODO: Go back an entire directory if backspace is pressed on a slash
+            // if (search[search.length - 1] === '/' && backspace) {
+            //    let folders = search.slice(0, -1).split('/');
+            //    folders.pop();
+            //    let newpath = folders.join('/') + '/';
+            //    setDirectory(newpath, quickpick);
+            // }
+            backspace = false;
         });
 	});
 
