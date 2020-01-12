@@ -13,14 +13,30 @@ export function activate(context: vscode.ExtensionContext) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('extension.helloWorld', () => {
+	let disposable = vscode.commands.registerCommand('extension.helloWorld', async () => {
 		// The code you place here will be executed every time your command is executed
 
         // Display a message box to the user
-        const path = vscode.Uri.file('Users/zach/.vscode/');
-        const dirRead = vscode.workspace.fs.readDirectory(path);
-        console.log(dirRead);
         vscode.window.showInformationMessage('Hello vscode');
+        const quickpick = vscode.window.createQuickPick();
+        const path = vscode.Uri.file('Users/zach/');
+        const dir = await vscode.workspace.fs.readDirectory(path);
+        dir.forEach(file => {
+            quickpick.items = quickpick.items.concat(
+                {
+                    label: file[0],
+                    alwaysShow: true
+                 }
+            );
+        });
+        quickpick.show();
+        quickpick.onDidChangeValue(search => {
+
+            if (search[search.length - 1] === '~') {
+                console.log('~');
+                quickpick.value = '~/';
+            }
+        });
 	});
 
 	context.subscriptions.push(disposable);
